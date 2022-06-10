@@ -49,16 +49,16 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/bin/Debug
+    artifactName: Debug
 - task: DownloadPipelineArtifact@2
   inputs:
     patterns: '**/*.exe,**/*.dll,**/*.pdb' # ensures Veracode gets the PDB files for Static Analyisis
 
       # This task makes the pipeline build artifacts available in a known location for upload to Veracode
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: $(System.DefaultWorkingDirectory)/bin/Debug
-    artifactName: Debug
+
     
 - task: Veracode@3
   inputs:
