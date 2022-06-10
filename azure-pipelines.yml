@@ -78,7 +78,7 @@ steps:
     
 
     
- - task: CmdLine@2
+- task: CmdLine@2
   displayName: Veracode Static Pipeline Scanner
   inputs:
     script: |
