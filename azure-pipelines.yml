@@ -1,4 +1,5 @@
 # ASP.NET
+
 # Build and test ASP.NET projects.
 # Add steps that publish symbols, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
@@ -21,6 +22,21 @@ steps:
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint'
+    AnalysisService: 'Veracode'
+    veracodeAppProfile: 'Verademo-Azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    sandboxName: 'DailyBuild'
+    createSandBox: true
+    importResults: true
+    createProfile: false
+    apiId: '$(VERACODE_API_ID_'
+    apiKey: '$(VERACODE_API_KEY)'
+    failBuildOnPolicyFail: false
+    failBuildIfUploadAndScanBuildStepFails: false
 
 - task: VSBuild@1
   inputs:
@@ -42,4 +58,45 @@ steps:
   inputs:
     PathtoPublish: '"$(build.artifactStagingDirectory)\results.json'
     ArtifactName: 'Build'
-    publishLocation: '"$(build.artifactStagingDirectory)"'
+    publishLocation: 'Container'
+
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: DownloadPipelineArtifact@2
+  inputs:
+    patterns: '**/*.exe,**/*.dll,**/*.pdb' # ensures Veracode gets the PDB files for Static Analyisis
+
+      # This task makes the pipeline build artifacts available in a known location for upload to Veracode
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/bin/Debug
+    artifactName: Debug
+
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint' # access Veracode with service connection or Veracode API credentials
+    AnalysisService: 'Veracode Service Account' # service connection name for accessing Veracode
+    veracodeAppProfile: '$(system.teamProject)' # Veracode application profile to scan
+    version: '$(build.buildNumber)' # name of the scan to run
+    filepath: '$(System.DefaultWorkingDirectory)/bin/Debug' # filepath or folderpath of files to upload to Veracode     
+    createSandBox: false # true to scan of new development sandbox
+    createProfile: true # false to enforce using existing profiles
+    failBuildIfUploadAndScanBuildStepFails: false # true to fail build if Upload and Scan task fails to start
+    importResults: true # required to view Veracode results in Azure DevOps
+    failBuildOnPolicyFail: false # true to fail the build if application fails policy
+    maximumWaitTime: '360'
