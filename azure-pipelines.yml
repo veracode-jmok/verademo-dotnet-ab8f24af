@@ -22,21 +22,7 @@ steps:
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
-- task: Veracode@3
-  inputs:
-    ConnectionDetailsSelection: 'Endpoint'
-    AnalysisService: 'Veracode'
-    veracodeAppProfile: 'Verademo-Azure'
-    version: '$(build.buildNumber)'
-    filepath: '$(build.artifactstagingdirectory)'
-    sandboxName: 'DailyBuild'
-    createSandBox: true
-    importResults: true
-    createProfile: false
-    apiId: '$(VERACODE_API_ID_'
-    apiKey: '$(VERACODE_API_KEY)'
-    failBuildOnPolicyFail: false
-    failBuildIfUploadAndScanBuildStepFails: false
+
 
 - task: VSBuild@1
   inputs:
@@ -45,20 +31,7 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- task: CmdLine@2
-  displayName: Veracode Static Pipeline Scanner
-  inputs:
-    script: |
-      curl -sSO https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
-      unzip -o pipeline-scan-LATEST.zip
-      java -jar pipeline-scan.jar -vid $(VERACODE_API_ID) -vkey $(VERACODE_API_KEY) -f $(build.artifactstagingdirectory)\Verademo-dotnet.zip || true
 
-- task: PublishBuildArtifacts@1
-  displayName: Create Build Artifact for Veracode Static Pipeline Scanner Results
-  inputs:
-    PathtoPublish: '"$(build.artifactStagingDirectory)\results.json'
-    ArtifactName: 'Build'
-    publishLocation: 'Container'
 
 - task: NuGetToolInstaller@1
 
@@ -86,17 +59,36 @@ steps:
   inputs:
     targetPath: $(System.DefaultWorkingDirectory)/bin/Debug
     artifactName: Debug
-
+    
 - task: Veracode@3
   inputs:
-    ConnectionDetailsSelection: 'Endpoint' # access Veracode with service connection or Veracode API credentials
-    AnalysisService: 'Veracode Service Account' # service connection name for accessing Veracode
-    veracodeAppProfile: '$(system.teamProject)' # Veracode application profile to scan
-    version: '$(build.buildNumber)' # name of the scan to run
-    filepath: '$(System.DefaultWorkingDirectory)/bin/Debug' # filepath or folderpath of files to upload to Veracode     
-    createSandBox: false # true to scan of new development sandbox
-    createProfile: true # false to enforce using existing profiles
-    failBuildIfUploadAndScanBuildStepFails: false # true to fail build if Upload and Scan task fails to start
-    importResults: true # required to view Veracode results in Azure DevOps
-    failBuildOnPolicyFail: false # true to fail the build if application fails policy
-    maximumWaitTime: '360'
+    ConnectionDetailsSelection: 'Endpoint'
+    AnalysisService: 'Veracode'
+    veracodeAppProfile: 'Verademo-Azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    sandboxName: 'DailyBuild'
+    createSandBox: true
+    importResults: true
+    createProfile: false
+    apiId: '$(VERACODE_API_ID_'
+    apiKey: '$(VERACODE_API_KEY)'
+    failBuildOnPolicyFail: false
+    failBuildIfUploadAndScanBuildStepFails: false
+    
+
+    
+ - task: CmdLine@2
+  displayName: Veracode Static Pipeline Scanner
+  inputs:
+    script: |
+      curl -sSO https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+      unzip -o pipeline-scan-LATEST.zip
+      java -jar pipeline-scan.jar -vid $(VERACODE_API_ID) -vkey $(VERACODE_API_KEY) -f $(build.artifactstagingdirectory)\Verademo-dotnet.zip || true
+
+- task: PublishBuildArtifacts@1
+  displayName: Create Build Artifact for Veracode Static Pipeline Scanner Results
+  inputs:
+    PathtoPublish: '"$(build.artifactStagingDirectory)\results.json'
+    ArtifactName: 'Build'
+    publishLocation: 'Container'
