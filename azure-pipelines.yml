@@ -1,4 +1,5 @@
 # .NET Desktop
+
 # Build and run tests for .NET Desktop or Windows classic desktop solutions.
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
@@ -30,7 +31,15 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Credentials'
+    apiId: 'dd8a37f63ef2ecdbdf6e806195007d0f'
+    apiKey: 'ef67607ffd6ffad6e62382862d681b4cdb48aba354b16d57329c34a3cc912b3f9528c9b3423e5caa350496b52e5873629ab67137745523d7a609b31f4feb5952'
+    veracodeAppProfile: 'verademo-azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    #maximumWaitTime: '360'
 - task: DownloadPipelineArtifact@2
   inputs:
     patterns: '**/*.exe,**/*.dll,**/*.pdb' # ensures Veracode gets the PDB files for Static Analyisis
