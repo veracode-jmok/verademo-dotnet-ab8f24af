@@ -1,5 +1,6 @@
 # .NET Desktop
 
+
 # Build and run tests for .NET Desktop or Windows classic desktop solutions.
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
@@ -31,6 +32,15 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint'
+    AnalysisService: 'Verademo'
+    veracodeAppProfile: 'Veradmo-Azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    sandboxName: 'DailyBuild'
+    maximumWaitTime: '360'
 - task: Veracode@3
   inputs:
     ConnectionDetailsSelection: 'Credentials'
