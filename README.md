@@ -11,4 +11,4 @@ Setup API ID and Key in Pipeline Variables –
 
 Once build completes you can download results.json from build summary screen or view them in the console output for the Pipeline scanner step.  
 
-Check the results.json into source code and reference it in the command to break bufg
+Check the results.json into source code and refghfghsdfhghshshference it in the command to break bufg
