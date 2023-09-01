@@ -1,0 +1,96 @@
+# .NET Desktop
+
+
+# Build and run tests for .NET Desktop or Windows classic desktop solutions.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Debug' # required as part of Veracode packaging for task: VSBuild@1
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint'
+    AnalysisService: 'Verademo'
+    veracodeAppProfile: 'Veradmo-Azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    sandboxName: 'DailyBuild'
+    maximumWaitTime: '360'
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Credentials'
+    apiId: 'dd8a37f63ef2ecdbdf6e806195007d0f'
+    apiKey: 'ef67607ffd6ffad6e62382862d681b4cdb48aba354b16d57329c34a3cc912b3f9528c9b3423e5caa350496b52e5873629ab67137745523d7a609b31f4feb5952'
+    veracodeAppProfile: 'verademo-azure'
+    version: '$(build.buildNumber)'
+    filepath: '$(build.artifactstagingdirectory)'
+    #maximumWaitTime: '360'
+- task: DownloadPipelineArtifact@2
+  inputs:
+    patterns: '**/*.exe,**/*.dll,**/*.pdb' # ensures Veracode gets the PDB files for Static Analyisis
+
+# This task makes the pipeline build artifacts available in a known location for upload to Veracode
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/bin/Debug
+    artifactName: Debug
+    
+- task: Veracode@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint' # access Veracode with service connection or Veracode API credentials
+    AnalysisService: 'Veracode Service Account' # service connection name for accessing Veracode
+    veracodeAppProfile: '$(system.teamProject)' # Veracode application profile to scan
+    version: '$(build.buildNumber)' # name of the scan to run
+    filepath: '$(System.DefaultWorkingDirectory)/bin/Debug' # filepath or folderpath of files to upload to Veracode
+    createSandBox: false # true to scan of new development sandbox
+    createProfile: true # false to enforce using existing profiles
+    failBuildIfUploadAndScanBuildStepFails: false # true to fail build if Upload and Scan task fails to start
+    importResults: true # required to view Veracode results in Azure DevOps
+    failBuildOnPolicyFail: false # true to fail the build if application fails policy
+    maximumWaitTime: '360' # wait time, in minutes, to fail the build if no scan results available
+
+- task: Veracode Flaw Importer@3
+  inputs:
+    ConnectionDetailsSelection: 'Endpoint' # access Veracode with service connection or Veracode API credentials
+    AnalysisService: 'Veracode Service Account' # service connection name for accessing Veracode
+    veracodeAppProfile: '$(system.teamProject)' # Veracode application profile to scan
+    sandboxName: 'MySandBox' # name of a development sandbox for sandbox scans
+    importType: 'All Flaws' # import all flaws discovered during scan
+    workItemType: 'Issue' # import all discovered flaws as Issue work item types
+    area: '$(system.teamProject)' # area for grouping work items
+    overwriteAreaPathInWorkItemsOnImport: 'true' # replace area path in all work items with value for 'area'
+    addCustomTag: 'MyCustomTag' # add MyCustomTag to all work items for imported flaws
+    addCweAsATag: true # add corresponding CWE ID to all work items for imported flaws
+    foundInBuild: true # add build number to all work items for imported flaws
+    addScanNameAsATag: true # add Veracode scan name to all work items for imported flaws
+    flawImportLimit: '1000' # import a maxium of 1000 flaws at the same time
+    customFields: # add these custom fields to work items for imported flaws
+      Custom.Field.Name1:value
+      Custom.Field.Name2:value
+      Custom.Field.Name3:value
+      Custom.Field.Name4:value
