@@ -10,5 +10,3 @@ Setup API ID and Key in Pipeline Variables –
 - VERACODE_API_KEY
 
 Once build completes you can download results.json from build summary screen or view them in the console output for the Pipeline scanner step.  
-
-Check the results.json into source code and refghfghsdfhghshshference it in the command to break bufg
